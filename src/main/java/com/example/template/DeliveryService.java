@@ -43,6 +43,8 @@ public class DeliveryService {
 
                 Delivery delivery = new Delivery();
                 delivery.setOrderId(orderPlaced.getOrderId());
+                delivery.setQuantity(orderPlaced.getQuantity());
+                delivery.setProductName(orderPlaced.getProductName());
                 delivery.setDeliveryAddress(orderPlaced.getCustomerAddr());
                 delivery.setCustomerId(orderPlaced.getCustomerId());
                 delivery.setCustomerName(orderPlaced.getCustomerName());
@@ -66,6 +68,8 @@ public class DeliveryService {
                     DeliveryCompleted deliveryCompleted = new DeliveryCompleted();
                     deliveryCompleted.setOrderId(deliveryStarted.getOrderId());
                     deliveryCompleted.setDeliveryId(deliveryStarted.getDeliveryId());
+                    deliveryCompleted.setQuantity(deliveryStarted.getQuantity());
+                    deliveryCompleted.setProductName(deliveryStarted.getProductName());
                     deliveryCompleted.setCustomerId(deliveryStarted.getCustomerId());
                     deliveryCompleted.setCustomerName(deliveryStarted.getCustomerName());
                     deliveryCompleted.setDeliveryAddress(deliveryStarted.getDeliveryAddress());

@@ -17,12 +17,12 @@ public class Delivery {
     @Id @GeneratedValue
     private Long deliveryId;
     private Long orderId;
+    private int quantity;
+    private String productName;
     private String customerId;
     private String customerName;
     private String deliveryAddress;
     private String deliveryState;
-
-
 
     public Long getDeliveryId() {
         return deliveryId;
@@ -38,6 +38,22 @@ public class Delivery {
 
     public void setOrderId(Long orderId) {
         this.orderId = orderId;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
     }
 
     public String getCustomerId() {
