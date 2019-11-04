@@ -25,11 +25,12 @@ steps:
   ### Publish
   - id: 'publish'
     name: 'gcr.io/cloud-builders/docker'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        docker push gcr.io/$PROJECT_ID/$_PROJECT_NAME:$COMMIT_SHA
+    args: ["push", "gcr.io/$PROJECT_ID/$_PROJECT_NAME:$COMMIT_SHA"]
+#    entrypoint: 'bash'
+#    args:
+#      - '-c'
+#      - |
+#        docker push gcr.io/$PROJECT_ID/$_PROJECT_NAME:$COMMIT_SHA
   ### deploy
   ## 아래 방법은 최근 방법으로 deploy 와 service 를 동시에 다음과 같이 배포가 가능하다.
   ## 다만 서비스명은 _PROJECT_NAME_service 로 자동 생성이 되고, LoadBalancer 로 생성이 된다.
