@@ -62,31 +62,35 @@ public class DeliveryService {
                 DeliveryStarted deliveryStarted = objectMapper.readValue(message, DeliveryStarted.class);
 
                 Delivery delivery = deliveryRepository.findById(deliveryStarted.getDeliveryId()).get();
-                delivery.setDeliveryState(DeliveryCompleted.class.getSimpleName());
-                deliveryRepository.save(delivery);
+                // TODO
+                // 메모리 DB 이고, 이벤트를 처음부터 무조건 받기 때문에, 생기는 문제로, 이미 취소된상태면 완료 이벤트를 발행하지 않는다
+                if( !DeliveryCancelled.class.getSimpleName().equals(delivery.getDeliveryState())) {
+                    delivery.setDeliveryState(DeliveryCompleted.class.getSimpleName());
+                    deliveryRepository.save(delivery);
 
-                String json = null;
+                    String json = null;
 
-                try {
-                    DeliveryCompleted deliveryCompleted = new DeliveryCompleted();
-                    deliveryCompleted.setOrderId(deliveryStarted.getOrderId());
-                    deliveryCompleted.setDeliveryId(deliveryStarted.getDeliveryId());
-                    deliveryCompleted.setQuantity(deliveryStarted.getQuantity());
-                    deliveryCompleted.setProductName(deliveryStarted.getProductName());
-                    deliveryCompleted.setCustomerId(deliveryStarted.getCustomerId());
-                    deliveryCompleted.setCustomerName(deliveryStarted.getCustomerName());
-                    deliveryCompleted.setDeliveryAddress(deliveryStarted.getDeliveryAddress());
-                    deliveryCompleted.setDeliveryState(DeliveryCompleted.class.getSimpleName());
+                    try {
+                        DeliveryCompleted deliveryCompleted = new DeliveryCompleted();
+                        deliveryCompleted.setOrderId(deliveryStarted.getOrderId());
+                        deliveryCompleted.setDeliveryId(deliveryStarted.getDeliveryId());
+                        deliveryCompleted.setQuantity(deliveryStarted.getQuantity());
+                        deliveryCompleted.setProductName(deliveryStarted.getProductName());
+                        deliveryCompleted.setCustomerId(deliveryStarted.getCustomerId());
+                        deliveryCompleted.setCustomerName(deliveryStarted.getCustomerName());
+                        deliveryCompleted.setDeliveryAddress(deliveryStarted.getDeliveryAddress());
+                        deliveryCompleted.setDeliveryState(DeliveryCompleted.class.getSimpleName());
 
-                    json = objectMapper.writeValueAsString(deliveryCompleted);
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException("JSON format exception", e);
+                        json = objectMapper.writeValueAsString(deliveryCompleted);
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException("JSON format exception", e);
+                    }
+
+                    Environment env = Application.applicationContext.getEnvironment();
+                    String topicName = env.getProperty("eventTopic");
+                    ProducerRecord producerRecord = new ProducerRecord<>(topicName, json);
+                    kafkaTemplate.send(producerRecord);
                 }
-
-                Environment env = Application.applicationContext.getEnvironment();
-                String topicName = env.getProperty("eventTopic");
-                ProducerRecord producerRecord = new ProducerRecord<>(topicName, json);
-                kafkaTemplate.send(producerRecord);
 
             /**
              * 주문이 취소됨 -> 배송 취소 이벤트 발송

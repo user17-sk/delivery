@@ -24,6 +24,32 @@ public class Delivery {
     private String deliveryAddress;
     private String deliveryState;
 
+    @PostPersist
+    private void publishDeliveryStart() {
+        KafkaTemplate kafkaTemplate = Application.applicationContext.getBean(KafkaTemplate.class);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = null;
+
+        if( deliveryState.equals(DeliveryStarted.class.getSimpleName())){
+            DeliveryStarted deliveryStarted = new DeliveryStarted();
+            deliveryStarted.setOrderId(this.getOrderId());
+            try {
+                BeanUtils.copyProperties(this, deliveryStarted);
+                json = objectMapper.writeValueAsString(deliveryStarted);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("JSON format exception", e);
+            }
+        }
+
+        if( json != null ){
+            Environment env = Application.applicationContext.getEnvironment();
+            String topicName = env.getProperty("eventTopic");
+            ProducerRecord producerRecord = new ProducerRecord<>(topicName, json);
+            kafkaTemplate.send(producerRecord);
+        }
+    }
+
     public Long getDeliveryId() {
         return deliveryId;
     }
@@ -86,32 +112,6 @@ public class Delivery {
 
     public void setDeliveryState(String deliveryState) {
         this.deliveryState = deliveryState;
-    }
-
-    @PostPersist
-    private void publishDeliveryStart() {
-        KafkaTemplate kafkaTemplate = Application.applicationContext.getBean(KafkaTemplate.class);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        String json = null;
-
-        if( deliveryState.equals(DeliveryStarted.class.getSimpleName())){
-            DeliveryStarted deliveryStarted = new DeliveryStarted();
-            deliveryStarted.setOrderId(this.getOrderId());
-            try {
-                BeanUtils.copyProperties(this, deliveryStarted);
-                json = objectMapper.writeValueAsString(deliveryStarted);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("JSON format exception", e);
-            }
-        }
-
-        if( json != null ){
-            Environment env = Application.applicationContext.getEnvironment();
-            String topicName = env.getProperty("eventTopic");
-            ProducerRecord producerRecord = new ProducerRecord<>(topicName, json);
-            kafkaTemplate.send(producerRecord);
-        }
     }
 
 }
