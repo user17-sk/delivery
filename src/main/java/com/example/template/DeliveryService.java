@@ -14,6 +14,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
+
 @Service
 public class DeliveryService {
 
@@ -84,6 +87,40 @@ public class DeliveryService {
                 String topicName = env.getProperty("eventTopic");
                 ProducerRecord producerRecord = new ProducerRecord<>(topicName, json);
                 kafkaTemplate.send(producerRecord);
+
+            /**
+             * 주문이 취소됨 -> 배송 취소 이벤트 발송
+             */
+            }else if( orderPlaced.getEventType().equals(OrderCancelled.class.getSimpleName())){
+                List<Delivery> deliverys = deliveryRepository.findByOrderIdOrderByDeliveryIdDesc(orderPlaced.getOrderId());
+
+                if( deliverys != null && deliverys.size() > 0 ){
+                    Delivery delivery = deliverys.get(0);
+                    delivery.setDeliveryState(DeliveryCancelled.class.getSimpleName());
+                    deliveryRepository.save(delivery);
+
+                    String json = null;
+
+                    try {
+                        DeliveryCancelled deliveryCancelled = new DeliveryCancelled();
+                        deliveryCancelled.setOrderId(delivery.getOrderId());
+                        deliveryCancelled.setDeliveryId(delivery.getDeliveryId());
+                        deliveryCancelled.setQuantity(delivery.getQuantity());
+                        deliveryCancelled.setProductName(delivery.getProductName());
+                        deliveryCancelled.setCustomerId(delivery.getCustomerId());
+                        deliveryCancelled.setCustomerName(delivery.getCustomerName());
+                        deliveryCancelled.setDeliveryState(DeliveryCancelled.class.getSimpleName());
+
+                        json = objectMapper.writeValueAsString(deliveryCancelled);
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException("JSON format exception", e);
+                    }
+
+                    Environment env = Application.applicationContext.getEnvironment();
+                    String topicName = env.getProperty("eventTopic");
+                    ProducerRecord producerRecord = new ProducerRecord<>(topicName, json);
+                    kafkaTemplate.send(producerRecord);
+                }
 
             }
 
