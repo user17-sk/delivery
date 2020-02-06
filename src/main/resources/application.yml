@@ -26,6 +26,10 @@ logging:
 
 server:
   port: 8082
+
+product:
+  api:
+    url: http://localhost:8085/
 ---
 spring:
   profiles: docker
