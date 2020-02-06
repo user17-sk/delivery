@@ -26,10 +26,10 @@ public class DeliveryController {
     private int count = 0;
 
     private static final String HOSTNAME = parseContainerIdFromHostname(
-            System.getenv().getOrDefault("HOSTNAME", "order"));
+            System.getenv().getOrDefault("HOSTNAME", "delivery"));
 
     static String parseContainerIdFromHostname(String hostname) {
-        return hostname.replaceAll("order-v\\d+-", "");
+        return hostname.replaceAll("delivery-\\d+-", "");
     }
 
     @PostMapping("/startDelivery")
@@ -41,7 +41,7 @@ public class DeliveryController {
         JsonElement element = parser.parse(data);
         String productId = element.getAsJsonObject().get("productId").getAsString();
         try {
-            Thread.sleep(500);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
