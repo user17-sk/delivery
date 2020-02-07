@@ -40,11 +40,11 @@ public class DeliveryController {
         JsonParser parser = new JsonParser();
         JsonElement element = parser.parse(data);
         String productId = element.getAsJsonObject().get("productId").getAsString();
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            Thread.sleep(1000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
 
         try {
             String result = restTemplate.patchForObject(remoteURL + "/product/"+productId, data, String.class);
