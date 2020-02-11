@@ -20,7 +20,7 @@ public class DeliveryController {
     @Autowired
     RestTemplate restTemplate;
 
-    @Value("${product.api.url:http://products:8080/}")
+    @Value("${api.url.product:http://products:8080}")
     private String remoteURL;
 
     private int count = 0;
