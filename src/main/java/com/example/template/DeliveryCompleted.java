@@ -10,6 +10,7 @@ public class DeliveryCompleted extends AbstractEvent{
     private Long deliveryId;
     private Long orderId;
     private int quantity;
+    private Long productId;
     private String productName;
     private String customerId;
     private String customerName;
@@ -17,9 +18,19 @@ public class DeliveryCompleted extends AbstractEvent{
     private String deliveryState;
 
     public DeliveryCompleted(){
-        this.setEventType(this.getClass().getSimpleName());
-        SimpleDateFormat defaultSimpleDateFormat = new SimpleDateFormat("YYYYMMddHHmmss");
-        this.timestamp = defaultSimpleDateFormat.format(new Date());
+        super();
+    }
+    public DeliveryCompleted(Delivery delivery){
+        this();
+        this.setOrderId(delivery.getOrderId());
+        this.setDeliveryId(delivery.getDeliveryId());
+        this.setQuantity(delivery.getQuantity());
+        this.setCustomerId(delivery.getCustomerId());
+        this.setCustomerName(delivery.getCustomerName());
+        this.setDeliveryAddress(delivery.getDeliveryAddress());
+        this.setProductId(delivery.getProductId());
+        this.setProductName(delivery.getProductName());
+        this.setDeliveryState(this.getClass().getSimpleName());
     }
 
     public String getStateMessage() {
@@ -36,6 +47,14 @@ public class DeliveryCompleted extends AbstractEvent{
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
     }
 
     public String getProductName() {

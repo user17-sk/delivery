@@ -18,6 +18,7 @@ public class Delivery {
     private Long deliveryId;
     private Long orderId;
     private int quantity;
+    private Long productId;
     private String productName;
     private String customerId;
     private String customerName;
@@ -26,27 +27,9 @@ public class Delivery {
 
     @PostPersist
     private void publishDeliveryStart() {
-        KafkaTemplate kafkaTemplate = Application.applicationContext.getBean(KafkaTemplate.class);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        String json = null;
-
-        if( deliveryState.equals(DeliveryStarted.class.getSimpleName())){
-            DeliveryStarted deliveryStarted = new DeliveryStarted();
-            deliveryStarted.setOrderId(this.getOrderId());
-            try {
-                BeanUtils.copyProperties(this, deliveryStarted);
-                json = objectMapper.writeValueAsString(deliveryStarted);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("JSON format exception", e);
-            }
-        }
-
-        if( json != null ){
-            Environment env = Application.applicationContext.getEnvironment();
-            String topicName = env.getProperty("eventTopic");
-            ProducerRecord producerRecord = new ProducerRecord<>(topicName, json);
-            kafkaTemplate.send(producerRecord);
+        if( deliveryState.equals(DeliveryStarted.class.getSimpleName())) {
+            DeliveryStarted deliveryStarted = new DeliveryStarted(this);
+            deliveryStarted.publish();
         }
     }
 
@@ -72,6 +55,14 @@ public class Delivery {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
     }
 
     public String getProductName() {

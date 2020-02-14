@@ -1,21 +1,18 @@
 package com.example.template;
 
+import com.example.template.config.kafka.KafkaProcessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.core.env.Environment;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class DeliveryService {
@@ -23,11 +20,8 @@ public class DeliveryService {
     @Autowired
     DeliveryRepository deliveryRepository;
 
-    @Autowired
-    private KafkaTemplate kafkaTemplate;
-
-    @KafkaListener(topics = "${eventTopic}")
-    public void onListener(@Payload String message, ConsumerRecord<?, ?> consumerRecord) {
+    @StreamListener(KafkaProcessor.INPUT)
+    public void onListener(@Payload String message) {
         System.out.println("##### listener : " + message);
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -67,29 +61,8 @@ public class DeliveryService {
                 if( !DeliveryCancelled.class.getSimpleName().equals(delivery.getDeliveryState())) {
                     delivery.setDeliveryState(DeliveryCompleted.class.getSimpleName());
                     deliveryRepository.save(delivery);
-
-                    String json = null;
-
-                    try {
-                        DeliveryCompleted deliveryCompleted = new DeliveryCompleted();
-                        deliveryCompleted.setOrderId(deliveryStarted.getOrderId());
-                        deliveryCompleted.setDeliveryId(deliveryStarted.getDeliveryId());
-                        deliveryCompleted.setQuantity(deliveryStarted.getQuantity());
-                        deliveryCompleted.setProductName(deliveryStarted.getProductName());
-                        deliveryCompleted.setCustomerId(deliveryStarted.getCustomerId());
-                        deliveryCompleted.setCustomerName(deliveryStarted.getCustomerName());
-                        deliveryCompleted.setDeliveryAddress(deliveryStarted.getDeliveryAddress());
-                        deliveryCompleted.setDeliveryState(DeliveryCompleted.class.getSimpleName());
-
-                        json = objectMapper.writeValueAsString(deliveryCompleted);
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException("JSON format exception", e);
-                    }
-
-                    Environment env = Application.applicationContext.getEnvironment();
-                    String topicName = env.getProperty("eventTopic");
-                    ProducerRecord producerRecord = new ProducerRecord<>(topicName, json);
-                    kafkaTemplate.send(producerRecord);
+                    DeliveryCompleted deliveryCompleted = new DeliveryCompleted(delivery);
+                    deliveryCompleted.publish();
                 }
 
             /**
@@ -103,27 +76,8 @@ public class DeliveryService {
                     delivery.setDeliveryState(DeliveryCancelled.class.getSimpleName());
                     deliveryRepository.save(delivery);
 
-                    String json = null;
-
-                    try {
-                        DeliveryCancelled deliveryCancelled = new DeliveryCancelled();
-                        deliveryCancelled.setOrderId(delivery.getOrderId());
-                        deliveryCancelled.setDeliveryId(delivery.getDeliveryId());
-                        deliveryCancelled.setQuantity(delivery.getQuantity());
-                        deliveryCancelled.setProductName(delivery.getProductName());
-                        deliveryCancelled.setCustomerId(delivery.getCustomerId());
-                        deliveryCancelled.setCustomerName(delivery.getCustomerName());
-                        deliveryCancelled.setDeliveryState(DeliveryCancelled.class.getSimpleName());
-
-                        json = objectMapper.writeValueAsString(deliveryCancelled);
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException("JSON format exception", e);
-                    }
-
-                    Environment env = Application.applicationContext.getEnvironment();
-                    String topicName = env.getProperty("eventTopic");
-                    ProducerRecord producerRecord = new ProducerRecord<>(topicName, json);
-                    kafkaTemplate.send(producerRecord);
+                    DeliveryCancelled deliveryCancelled = new DeliveryCancelled(delivery);
+                    deliveryCancelled.publish();
                 }
 
             }
