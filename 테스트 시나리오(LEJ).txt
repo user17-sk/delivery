@@ -1,0 +1,15 @@
+성공 케이스
+// 재고 서비스 입고
+http POST localhost:8082/stocks bookid="2" qty=3
+
+// 예약 서비스에서 입고된 책 예약
+http POST localhost:8081/reservations bookid="2" userid="test2"
+
+http GET localhost:8081/reservations
+
+//배송 완료 처리
+http PATCH localhost:8084/deliveries/1 status="DeliveryCompleted"
+
+http GET localhost:8084/deliveries
+
+
